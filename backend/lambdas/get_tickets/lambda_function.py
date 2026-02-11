@@ -21,16 +21,32 @@ def lambda_handler(event, context):
     - Get all tickets for a user
     - Get tickets by status
     - Get tickets assigned to an agent
+    
+    WITH RBAC: Customers see only their tickets, Agents/Admins see all
     """
     try:
+        # Extract user info from JWT (provided by API Gateway authorizer)
+        user_email = event.get('requestContext', {}).get('authorizer', {}).get('claims', {}).get('email')
+        user_groups = event.get('requestContext', {}).get('authorizer', {}).get('claims', {}).get('cognito:groups', '')
+        
+        # Determine user role
+        is_customer = 'customers' in user_groups
+        is_agent = 'agents' in user_groups
+        is_admin = 'admins' in user_groups
+        
         # Get query parameters
         params = event.get('queryStringParameters', {}) or {}
         path_params = event.get('pathParameters', {}) or {}
         
         # Single ticket lookup
         if 'ticket_id' in path_params:
-            return get_ticket_by_id(path_params['ticket_id'])
+            return get_ticket_by_id(path_params['ticket_id'], user_email, is_customer)
         
+        # FOR CUSTOMERS: Always filter by their user_id (ignore other params)
+        if is_customer:
+            return get_tickets_by_user(user_email)
+        
+        # FOR AGENTS/ADMINS: Allow flexible querying
         # Query by user
         if 'user_id' in params:
             return get_tickets_by_user(params['user_id'])
@@ -43,24 +59,30 @@ def lambda_handler(event, context):
         if 'assigned_to' in params:
             return get_tickets_by_agent(params['assigned_to'])
         
-        # Default: scan all tickets (limit 100)
+        # Default: get all tickets (agents/admins only)
         return get_all_tickets()
         
     except Exception as e:
         print(f"Error getting tickets: {str(e)}")
         return response(500, {'error': 'Internal server error'})
 
-def get_ticket_by_id(ticket_id):
-    """Get a single ticket by ID"""
+def get_ticket_by_id(ticket_id, user_email, is_customer):
+    """Get a single ticket by ID - with RBAC check"""
     result = tickets_table.query(
         KeyConditionExpression=Key('ticket_id').eq(ticket_id),
         Limit=1
     )
     
-    if result['Items']:
-        return response(200, {'ticket': result['Items'][0]})
-    else:
+    if not result['Items']:
         return response(404, {'error': 'Ticket not found'})
+    
+    ticket = result['Items'][0]
+    
+    # RBAC: Customers can only see their own tickets
+    if is_customer and ticket.get('user_id') != user_email:
+        return response(403, {'error': 'Access denied'})
+    
+    return response(200, {'ticket': ticket})
 
 def get_tickets_by_user(user_id):
     """Get all tickets for a specific user"""
@@ -107,7 +129,7 @@ def get_tickets_by_agent(agent_id):
     })
 
 def get_all_tickets():
-    """Get all tickets (limited to 100)"""
+    """Get all tickets (agents/admins only - already checked in main handler)"""
     result = tickets_table.scan(Limit=100)
     
     return response(200, {
