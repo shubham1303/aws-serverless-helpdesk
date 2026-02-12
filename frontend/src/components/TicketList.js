@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import axios from 'axios';
 
-function TicketList({ user }) {
+function TicketList({ user, userRole }) {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -91,7 +91,9 @@ function TicketList({ user }) {
   return (
     <div className="ticket-list">
       <div className="ticket-list-header">
-        <h2>Your Tickets ({tickets.length})</h2>
+        <h2>
+          {userRole === 'customer' ? 'Your Tickets' : 'All Tickets'} ({tickets.length})
+        </h2>
         <button onClick={fetchTickets} className="btn-refresh">
           🔄 Refresh
         </button>
@@ -121,6 +123,20 @@ function TicketList({ user }) {
               </span>
               <span className="ticket-id">{ticket.ticket_id}</span>
             </div>
+
+            {/* Show assigned_to for agents/admins only */}
+            {(userRole === 'agent' || userRole === 'admin') && (
+              <div className="ticket-assigned">
+                <small>Assigned to: {ticket.assigned_to || 'Unassigned'}</small>
+              </div>
+            )}
+
+            {/* Show user_id for agents/admins only */}
+            {(userRole === 'agent' || userRole === 'admin') && (
+              <div className="ticket-user">
+                <small>Customer: {ticket.user_id}</small>
+              </div>
+            )}
 
             <div className="ticket-footer">
               <small>Created: {new Date(ticket.created_at).toLocaleString()}</small>

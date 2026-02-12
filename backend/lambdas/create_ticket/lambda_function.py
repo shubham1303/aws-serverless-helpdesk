@@ -5,12 +5,6 @@ from datetime import datetime, timedelta
 import uuid
 from decimal import Decimal
 
-class DecimalEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, Decimal):
-            return int(obj) if obj % 1 == 0 else float(obj)
-        return super(DecimalEncoder, self).default(obj)
-
 dynamodb = boto3.resource('dynamodb')
 tickets_table = dynamodb.Table(os.environ['TICKETS_TABLE'])
 sla_table = dynamodb.Table(os.environ['SLA_TABLE'])
@@ -23,11 +17,25 @@ SLA_TIMES = {
     'low': 72
 }
 
+# Helper class to convert Decimal to float/int for JSON serialization
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return int(obj) if obj % 1 == 0 else float(obj)
+        return super(DecimalEncoder, self).default(obj)
+
 def lambda_handler(event, context):
     """
     Create a new support ticket
+    WITH RBAC: Always use authenticated user's email as user_id
     """
     try:
+        # Extract user info from JWT (provided by API Gateway authorizer)
+        user_email = event.get('requestContext', {}).get('authorizer', {}).get('claims', {}).get('email')
+        
+        if not user_email:
+            return response(401, {'error': 'User email not found in token'})
+        
         # Parse request body
         if 'body' in event:
             body = json.loads(event['body'])
@@ -35,7 +43,7 @@ def lambda_handler(event, context):
             body = event
         
         # Validate required fields
-        required_fields = ['title', 'description', 'user_id', 'priority']
+        required_fields = ['title', 'description', 'priority']
         for field in required_fields:
             if field not in body:
                 return response(400, {'error': f'Missing required field: {field}'})
@@ -50,10 +58,11 @@ def lambda_handler(event, context):
         breach_time = datetime.utcnow() + timedelta(hours=sla_hours)
         
         # Create ticket item
+        # IMPORTANT: Use authenticated user's email as user_id (don't trust request body!)
         ticket_item = {
             'ticket_id': ticket_id,
             'created_at': created_at,
-            'user_id': body['user_id'],
+            'user_id': user_email,  # Always use JWT email!
             'title': body['title'],
             'description': body['description'],
             'status': 'open',

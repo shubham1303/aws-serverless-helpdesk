@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { fetchAuthSession } from 'aws-amplify/auth';
 import axios from 'axios';
 
-function CreateTicket({ user, onSuccess }) {
+function CreateTicket({ user, userRole, onSuccess }) {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -53,7 +53,6 @@ function CreateTicket({ user, onSuccess }) {
         description: formData.description.trim(),
         priority: formData.priority,
         category: formData.category,
-        user_id: user.signInDetails?.loginId || user.username,
       };
 
       // Call API
