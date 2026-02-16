@@ -70,11 +70,10 @@ resource "aws_cognito_user_pool" "helpdesk_pool" {
     }
   }
 
-  # Lambda triggers (optional - for custom logic)
-  # Uncomment if you want to add custom validation
-  # lambda_config {
-  #   pre_sign_up = aws_lambda_function.pre_signup.arn
-  # }
+# Lambda trigger to auto-assign users to customers group
+  lambda_config {
+    post_confirmation = var.post_signup_lambda_arn
+  }
 
   tags = {
     Name        = "${var.project_name}-${var.environment}-user-pool"

@@ -21,3 +21,9 @@ variable "logout_urls" {
   type        = list(string)
   default     = ["http://localhost:3000", "http://localhost:3000/logout"]
 }
+
+variable "post_signup_lambda_arn" {
+  description = "ARN of post-signup Lambda trigger"
+  type        = string
+  default     = ""
+}

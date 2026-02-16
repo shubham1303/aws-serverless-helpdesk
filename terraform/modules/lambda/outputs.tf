@@ -64,3 +64,8 @@ output "lambda_role_arn" {
   description = "ARN of Lambda IAM role"
   value       = aws_iam_role.lambda_role.arn
 }
+
+output "post_signup_function_arn" {
+  description = "ARN of post signup Lambda function"
+  value       = aws_lambda_function.post_signup.arn
+}

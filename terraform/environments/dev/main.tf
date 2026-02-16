@@ -72,6 +72,7 @@ module "lambda" {
   comments_table_name = module.dynamodb.comments_table_name
   sla_table_name      = module.dynamodb.sla_tracking_table_name
   dynamodb_table_arns = module.dynamodb.all_table_arns
+  cognito_user_pool_arn = module.cognito.user_pool_arn 
 }
 
 # Cognito Module
@@ -83,6 +84,8 @@ module "cognito" {
   
   callback_urls = ["http://localhost:3000/callback", "http://localhost:3000"]
   logout_urls   = ["http://localhost:3000", "http://localhost:3000/logout"]
+
+  post_signup_lambda_arn = module.lambda.post_signup_function_arn
 }
 
 # API Gateway Module

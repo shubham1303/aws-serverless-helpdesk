@@ -34,3 +34,9 @@ variable "dynamodb_table_arns" {
   description = "List of DynamoDB table ARNs for IAM permissions"
   type        = list(string)
 }
+
+variable "cognito_user_pool_arn" {
+  description = "ARN of Cognito User Pool (for trigger permissions)"
+  type        = string
+  default     = ""
+}

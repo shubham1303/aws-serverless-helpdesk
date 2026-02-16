@@ -60,6 +60,33 @@ resource "aws_iam_role_policy_attachment" "lambda_dynamodb_attach" {
   policy_arn = aws_iam_policy.lambda_dynamodb_policy.arn
 }
 
+# IAM Policy for Cognito group management
+resource "aws_iam_policy" "lambda_cognito_policy" {
+  name        = "${var.project_name}-${var.environment}-lambda-cognito-policy"
+  description = "Allows Lambda to manage Cognito groups"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "cognito-idp:AdminAddUserToGroup",
+          "cognito-idp:GetGroup",
+          "cognito-idp:ListGroups"
+        ]
+        Resource = var.cognito_user_pool_arn != "" ? [var.cognito_user_pool_arn] : ["*"]
+      }
+    ]
+  })
+}
+
+# Attach Cognito policy to Lambda role
+resource "aws_iam_role_policy_attachment" "lambda_cognito_attach" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = aws_iam_policy.lambda_cognito_policy.arn
+}
+
 # Attach AWS managed policy for CloudWatch Logs
 resource "aws_iam_role_policy_attachment" "lambda_logs" {
   role       = aws_iam_role.lambda_role.name
@@ -196,6 +223,42 @@ resource "aws_cloudwatch_log_group" "add_comment" {
   }
 }
 
+# Lambda function: Post Signup Trigger
+resource "aws_lambda_function" "post_signup" {
+  filename         = data.archive_file.post_signup.output_path
+  function_name    = "${var.project_name}-${var.environment}-post-signup"
+  role            = aws_iam_role.lambda_role.arn
+  handler         = "lambda_function.lambda_handler"
+  source_code_hash = data.archive_file.post_signup.output_base64sha256
+  runtime         = "python3.12"
+  timeout         = 10
+  memory_size     = 128
+
+  tags = {
+    Name        = "${var.project_name}-${var.environment}-post-signup"
+    Environment = var.environment
+  }
+}
+
+# CloudWatch Log Group
+resource "aws_cloudwatch_log_group" "post_signup" {
+  name              = "/aws/lambda/${aws_lambda_function.post_signup.function_name}"
+  retention_in_days = 7
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
+# Permission for Cognito to invoke this Lambda
+resource "aws_lambda_permission" "cognito_post_signup" {
+  statement_id  = "AllowCognitoInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.post_signup.function_name
+  principal     = "cognito-idp.amazonaws.com"
+  source_arn    = var.cognito_user_pool_arn
+}
+
 # Data sources to zip Lambda code
 data "archive_file" "create_ticket" {
   type        = "zip"
@@ -219,4 +282,10 @@ data "archive_file" "add_comment" {
   type        = "zip"
   source_file = "${path.module}/../../../backend/lambdas/add_comment/lambda_function.py"
   output_path = "${path.module}/lambda_packages/add_comment.zip"
+}
+
+data "archive_file" "post_signup" {
+  type        = "zip"
+  source_file = "${path.module}/../../../backend/lambdas/post_signup/lambda_function.py"
+  output_path = "${path.module}/lambda_packages/post_signup.zip"
 }
