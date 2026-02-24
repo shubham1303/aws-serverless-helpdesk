@@ -57,7 +57,7 @@ function App() {
         return (
           <div className="app">
             <header className="app-header">
-              <h1>🎫 Helpdesk Platform</h1>
+              <h1>🎫 Helpdesk Platform v2.0</h1>
               <div className="user-info">
                 <span>
                   {user.signInDetails?.loginId || 'User'}
