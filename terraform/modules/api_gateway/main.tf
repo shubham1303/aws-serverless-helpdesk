@@ -45,9 +45,7 @@ resource "aws_api_gateway_resource" "comments" {
   path_part   = "comments"
 }
 
-# ========================================
 # POST /tickets - Create Ticket
-# ========================================
 resource "aws_api_gateway_method" "create_ticket" {
   rest_api_id   = aws_api_gateway_rest_api.helpdesk_api.id
   resource_id   = aws_api_gateway_resource.tickets.id
@@ -66,9 +64,7 @@ resource "aws_api_gateway_integration" "create_ticket" {
   uri                     = var.create_ticket_invoke_arn
 }
 
-# ========================================
 # GET /tickets - List Tickets
-# ========================================
 resource "aws_api_gateway_method" "get_tickets" {
   rest_api_id   = aws_api_gateway_rest_api.helpdesk_api.id
   resource_id   = aws_api_gateway_resource.tickets.id
@@ -87,9 +83,7 @@ resource "aws_api_gateway_integration" "get_tickets" {
   uri                     = var.get_tickets_invoke_arn
 }
 
-# ========================================
 # GET /tickets/{id} - Get Single Ticket
-# ========================================
 resource "aws_api_gateway_method" "get_ticket_by_id" {
   rest_api_id   = aws_api_gateway_rest_api.helpdesk_api.id
   resource_id   = aws_api_gateway_resource.ticket_id.id
@@ -108,9 +102,7 @@ resource "aws_api_gateway_integration" "get_ticket_by_id" {
   uri                     = var.get_tickets_invoke_arn
 }
 
-# ========================================
 # PUT /tickets/{id} - Update Ticket
-# ========================================
 resource "aws_api_gateway_method" "update_ticket" {
   rest_api_id   = aws_api_gateway_rest_api.helpdesk_api.id
   resource_id   = aws_api_gateway_resource.ticket_id.id
@@ -129,9 +121,7 @@ resource "aws_api_gateway_integration" "update_ticket" {
   uri                     = var.update_ticket_invoke_arn
 }
 
-# ========================================
 # POST /tickets/{id}/comments - Add Comment
-# ========================================
 resource "aws_api_gateway_method" "add_comment" {
   rest_api_id   = aws_api_gateway_rest_api.helpdesk_api.id
   resource_id   = aws_api_gateway_resource.comments.id
@@ -150,9 +140,7 @@ resource "aws_api_gateway_integration" "add_comment" {
   uri                     = var.add_comment_invoke_arn
 }
 
-# ========================================
 # CORS Configuration (Allow frontend to call API)
-# ========================================
 
 # OPTIONS /tickets
 resource "aws_api_gateway_method" "tickets_options" {
@@ -199,9 +187,7 @@ resource "aws_api_gateway_integration_response" "tickets_options" {
   }
 }
 
-# ========================================
 # Deployment and Stage
-# ========================================
 resource "aws_api_gateway_deployment" "helpdesk_deployment" {
   rest_api_id = aws_api_gateway_rest_api.helpdesk_api.id
 
@@ -237,9 +223,7 @@ resource "aws_api_gateway_stage" "helpdesk_stage" {
   }
 }
 
-# ========================================
 # Lambda Permissions (Allow API Gateway to invoke Lambda)
-# ========================================
 resource "aws_lambda_permission" "create_ticket" {
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
@@ -272,9 +256,7 @@ resource "aws_lambda_permission" "add_comment" {
   source_arn    = "${aws_api_gateway_rest_api.helpdesk_api.execution_arn}/*/*"
 }
 
-# ========================================
 # CloudWatch Logs for API Gateway
-# ========================================
 resource "aws_cloudwatch_log_group" "api_gateway" {
   name              = "/aws/apigateway/${var.project_name}-${var.environment}"
   retention_in_days = 7
