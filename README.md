@@ -1,370 +1,74 @@
-###### \# AWS Serverless Helpdesk Platform
-
-###### 
-
-###### A production-grade, cloud-native SaaS helpdesk and ticketing system built entirely on AWS using Infrastructure as Code (Terraform) and modern serverless architecture.
-
-###### 
-
-###### \*\*🌐 Live Demo:\*\* https://d19zv988yhv8d8.cloudfront.net
-
-###### 
-
-###### \*\*Test Credentials:\*\*
-
-###### \- Email: `test-customer@example.com`
-
-###### \- Password: `NewPass123!`
-
-###### 
-
-###### ---
-
-###### 
-
-###### \## Architecture Overview
-
-###### 
-
-###### Built with AWS serverless services for scalability, cost-efficiency, and zero server management.
-
-###### 
-
-###### \*\*Tech Stack:\*\*
-
-###### \- \*\*Frontend:\*\* React + S3 + CloudFront
-
-###### \- \*\*API:\*\* API Gateway (REST)
-
-###### \- \*\*Compute:\*\* Lambda (Python)
-
-###### \- \*\*Database:\*\* DynamoDB
-
-###### \- \*\*Auth:\*\* Cognito
-
-###### \- \*\*Infrastructure:\*\* Terraform (IaC)
-
-###### 
-
-###### \*\*Architecture Flow:\*\*
-
-###### ```
-
-###### User → CloudFront → S3 (React App)
-
-###### &nbsp;       ↓
-
-###### &nbsp;   API Gateway → Cognito (Auth) + Lambda → DynamoDB
-
-###### ```
-
-###### 
-
-###### ---
-
-###### 
-
-###### \## Key Features
-
-###### 
-
-###### \*\*User Experience:\*\*
-
-###### \- 🔐 Secure email/password authentication with JWT tokens
-
-###### \- 🎫 Create and manage support tickets
-
-###### \- 📊 Real-time ticket status tracking
-
-###### \- 🎨 Modern, responsive React interface
-
-###### \- 📱 Mobile-friendly design
-
-###### 
-
-###### \*\*Technical Highlights:\*\*
-
-###### \- ⚡ Serverless architecture (auto-scaling, pay-per-use)
-
-###### \- 🔒 API Gateway authorization with Cognito
-
-###### \- 🌍 Global CDN via CloudFront
-
-###### \- 🏗️ 100% Infrastructure as Code with Terraform
-
-###### \- 📈 DynamoDB with optimized indexes for fast queries
-
-###### 
-
-###### ---
-
-###### 
-
-###### \## Tech Stack Details
-
-###### 
-
-###### \*\*Frontend\*\*
-
-###### \- React 18
-
-###### \- AWS Amplify (Authentication)
-
-###### \- Axios (API client)
-
-###### 
-
-###### \*\*Backend\*\*
-
-###### \- AWS Lambda (Python 3.12)
-
-###### \- API Gateway (REST endpoints)
-
-###### \- DynamoDB (NoSQL database)
-
-###### \- Cognito (User authentication)
-
-###### 
-
-###### \*\*Infrastructure\*\*
-
-###### \- Terraform (Infrastructure as Code)
-
-###### \- AWS VPC (Networking)
-
-###### \- S3 (Static hosting)
-
-###### \- CloudFront (CDN)
-
-###### \- CloudWatch (Monitoring)
-
-###### 
-
-###### ---
-
-###### 
-
-###### \## Project Structure
-
-###### 
-
-###### ```
-
-###### helpdesk-platform/
-
-###### ├── terraform/
-
-###### │   ├── modules/           # Reusable infrastructure modules
-
-###### │   └── environments/dev/  # Environment-specific configs
-
-###### ├── backend/lambdas/       # Python Lambda functions
-
-###### └── frontend/src/          # React application
-
-###### ```
-
-###### 
-
-###### ---
-
-###### 
-
-###### \## API Endpoints
-
-###### 
-
-###### All endpoints require JWT authentication via `Authorization: Bearer {token}` header.
-
-###### 
-
-###### | Method | Endpoint | Description |
-
-###### |--------|----------|-------------|
-
-###### | POST | `/tickets` | Create new ticket |
-
-###### | GET | `/tickets` | List all tickets |
-
-###### | GET | `/tickets/{id}` | Get ticket details |
-
-###### | PUT | `/tickets/{id}` | Update ticket |
-
-###### | POST | `/tickets/{id}/comments` | Add comment |
-
-###### 
-
-###### ---
-
-###### 
-
-###### \## Database Schema
-
-###### 
-
-###### \*\*Tickets Table\*\*
-
-###### \- Primary Key: `ticket\_id` + `created\_at`
-
-###### \- Attributes: title, description, status, priority, user\_id
-
-###### \- Indexes: UserIndex, StatusIndex, AssignedIndex
-
-###### 
-
-###### \*\*Users Table\*\*
-
-###### \- Primary Key: `user\_id`
-
-###### \- Attributes: email, name, user\_type
-
-###### \- Indexes: EmailIndex, UserTypeIndex
-
-###### 
-
-###### ---
-
-###### 
-
-###### \## Deployment
-
-###### 
-
-###### \*\*Prerequisites:\*\*
-
-###### \- AWS Account
-
-###### \- Terraform >= 1.0
-
-###### \- AWS CLI configured
-
-###### \- Node.js >= 18
-
-###### 
-
-###### \*\*Deploy Infrastructure:\*\*
-
-###### ```bash
-
-###### cd terraform/environments/dev
-
-###### terraform init
-
-###### terraform apply
-
-###### ```
-
-###### 
-
-###### \*\*Deploy Frontend:\*\*
-
-###### ```bash
-
-###### cd frontend
-
-###### npm install
-
-###### npm run build
-
-###### aws s3 sync build/ s3://YOUR-BUCKET/ --delete
-
-###### aws cloudfront create-invalidation --distribution-id ID --paths "/\*"
-
-###### ```
-
-###### 
-
-###### ---
-
-###### 
-
-###### \## Cost Estimate
-
-###### 
-
-###### \*\*Development:\*\* ~$5-15/month (mostly free tier)
-
-###### \*\*Production:\*\* ~$50-100/month (moderate traffic)
-
-###### 
-
-###### Most AWS services have generous free tiers for the first 12 months!
-
-###### 
-
-###### ---
-
-###### 
-
-###### \## Security
-
-###### 
-
-###### \- JWT token authentication
-
-###### \- API Gateway request validation
-
-###### \- DynamoDB encryption at rest
-
-###### \- HTTPS enforced via CloudFront
-
-###### \- VPC isolation for Lambda functions
-
-###### \- Cognito password policies
-
-###### 
-
-###### ---
-
-###### 
-
-###### \## Future Enhancements
-
-###### 
-
-###### \- Role-based access control (RBAC)
-
-###### \- Email notifications via SES
-
-###### \- File attachments with S3 upload
-
-###### \- SLA monitoring and alerts
-
-###### \- Admin analytics dashboard
-
-###### \- CI/CD pipeline with GitHub Actions
-
-###### 
-
-###### ---
-
-###### 
-
-###### \## Author
-
-###### 
-
-###### \*\*Shubham More\*\*
-
-###### \- GitHub: \[@shubmore1303](https://github.com/shubmore1303)
-
-###### 
-
-###### ---
-
-###### 
-
-###### \## License
-
-###### 
-
-###### MIT License - feel free to use this project for learning!
-
-###### 
-
-###### ---
-
-###### 
-
-###### ⭐ \*\*Star this repo if you found it helpful!\*\*
-
+# aws-serverless-helpdesk
+
+A small ticketing app (think a stripped-down Zendesk) that I built to get hands-on
+with Terraform and the AWS serverless stack. Customers sign up, open tickets and see
+their own; agents and admins see everyone's.
+
+Demo: https://d19zv988yhv8d8.cloudfront.net
+
+## Stack
+
+- **Frontend:** React, Amplify UI for the login screens, hosted on S3 behind CloudFront
+- **Auth:** Cognito user pool with three groups (customers, agents, admins). A
+  post-confirmation Lambda puts every new signup into `customers`.
+- **API:** API Gateway REST API with a Cognito authorizer in front of Python 3.12 Lambdas
+- **Data:** DynamoDB, mainly the `tickets` table with GSIs on user, status and assignee
+- **Infra:** Terraform, split into modules (networking, dynamodb, lambda, cognito,
+  api_gateway, s3_cloudfront), with remote state in S3 + a DynamoDB lock table
+- **CI/CD:** GitHub Actions. A push to main builds the frontend, syncs it to S3,
+  invalidates CloudFront and re-applies the Lambda module.
+
+## What works
+
+- sign up / sign in, role shown in the header
+- creating a ticket (title, description, priority, category)
+- each ticket gets an SLA deadline based on priority (critical 1h, high 4h, medium 24h, low 72h)
+- ticket list: customers see their own, agents/admins see all and can filter by
+  `status`, `user_id` or `assigned_to` through the API
+
+## Not done yet / known issues
+
+Being honest here since this is still a work in progress:
+
+- `GET /tickets/{id}` and `PUT /tickets/{id}` don't work. The route param is `{id}`
+  but the Lambdas read `ticket_id`. Easy fix, just haven't gotten to it.
+- No UI yet for updating status, assigning tickets or comments. There's an
+  `add_comment` Lambda but nothing reads comments back.
+- CORS preflight is only set up on `/tickets`.
+- I provisioned a VPC and a few extra tables (users, attachments, analytics) early on
+  that nothing uses yet. The Lambdas don't run inside the VPC.
+
+## Deploying it yourself
+
+1. Create the state bucket and lock table:
+   ```sh
+   cd terraform/bootstrap
+   terraform init && terraform apply
+   ```
+2. Change the backend bucket name in `terraform/environments/dev/main.tf` to yours, then:
+   ```sh
+   cd terraform/environments/dev
+   terraform init && terraform apply
+   ```
+3. Put the Cognito pool/client IDs and the API URL from the Terraform outputs into
+   `frontend/src/aws-config.js` and the two files in `frontend/src/components/` (they're
+   hardcoded for now, moving them to env vars is on the list).
+4. `cd frontend && npm install && npm run build`, then sync `build/` to the bucket.
+
+For CI you'll need `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` repo secrets and
+to update the bucket name and distribution ID at the top of
+`.github/workflows/deploy.yml`.
+
+Cost-wise it sits in the free tier for me. If you turn on the NAT gateway
+(`enable_nat_gateway`), that alone is ~$30/month, so leave it off.
+
+## Layout
+
+```
+backend/     lambda source
+frontend/    react app
+terraform/
+  bootstrap/          state bucket + lock table
+  environments/dev/   the actual stack
+  modules/            one module per service
+```
