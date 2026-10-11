@@ -38,9 +38,10 @@ def lambda_handler(event, context):
         params = event.get('queryStringParameters', {}) or {}
         path_params = event.get('pathParameters', {}) or {}
         
-        # Single ticket lookup
-        if 'ticket_id' in path_params:
-            return get_ticket_by_id(path_params['ticket_id'], user_email, is_customer)
+        # Single ticket lookup (the API route is /tickets/{id})
+        ticket_id = path_params.get('id') or path_params.get('ticket_id')
+        if ticket_id:
+            return get_ticket_by_id(ticket_id, user_email, is_customer)
         
         # FOR CUSTOMERS: Always filter by their user_id (ignore other params)
         if is_customer:

@@ -25,16 +25,17 @@ Demo: https://d19zv988yhv8d8.cloudfront.net
 - each ticket gets an SLA deadline based on priority (critical 1h, high 4h, medium 24h, low 72h)
 - ticket list: customers see their own, agents/admins see all and can filter by
   `status`, `user_id` or `assigned_to` through the API
+- `GET /tickets/{id}` for a single ticket (customers get a 403 on other people's)
+- `PUT /tickets/{id}` for agents/admins to change status, priority, assignee etc.
+  Customers can only edit the title and description of their own tickets
 
 ## Not done yet / known issues
 
 Being honest here since this is still a work in progress:
 
-- `GET /tickets/{id}` and `PUT /tickets/{id}` don't work. The route param is `{id}`
-  but the Lambdas read `ticket_id`. Easy fix, just haven't gotten to it.
-- No UI yet for updating status, assigning tickets or comments. There's an
-  `add_comment` Lambda but nothing reads comments back.
-- CORS preflight is only set up on `/tickets`.
+- No UI yet for updating status, assigning tickets or comments. The API for
+  updates works now, the frontend just doesn't use it. There's an `add_comment`
+  Lambda but nothing reads comments back.
 - I provisioned a VPC and a few extra tables (users, attachments, analytics) early on
   that nothing uses yet. The Lambdas don't run inside the VPC.
 

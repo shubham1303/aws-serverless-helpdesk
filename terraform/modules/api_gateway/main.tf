@@ -187,6 +187,63 @@ resource "aws_api_gateway_integration_response" "tickets_options" {
   }
 }
 
+# OPTIONS /tickets/{id} and /tickets/{id}/comments
+# same setup as /tickets, without these the browser preflight fails
+locals {
+  cors_resources = {
+    ticket_id = aws_api_gateway_resource.ticket_id.id
+    comments  = aws_api_gateway_resource.comments.id
+  }
+}
+
+resource "aws_api_gateway_method" "cors_options" {
+  for_each      = local.cors_resources
+  rest_api_id   = aws_api_gateway_rest_api.helpdesk_api.id
+  resource_id   = each.value
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "cors_options" {
+  for_each    = local.cors_resources
+  rest_api_id = aws_api_gateway_rest_api.helpdesk_api.id
+  resource_id = each.value
+  http_method = aws_api_gateway_method.cors_options[each.key].http_method
+  type        = "MOCK"
+
+  request_templates = {
+    "application/json" = "{\"statusCode\": 200}"
+  }
+}
+
+resource "aws_api_gateway_method_response" "cors_options" {
+  for_each    = local.cors_resources
+  rest_api_id = aws_api_gateway_rest_api.helpdesk_api.id
+  resource_id = each.value
+  http_method = aws_api_gateway_method.cors_options[each.key].http_method
+  status_code = "200"
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "cors_options" {
+  for_each    = local.cors_resources
+  rest_api_id = aws_api_gateway_rest_api.helpdesk_api.id
+  resource_id = each.value
+  http_method = aws_api_gateway_method.cors_options[each.key].http_method
+  status_code = aws_api_gateway_method_response.cors_options[each.key].status_code
+
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,DELETE,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+}
+
 # Deployment and Stage
 resource "aws_api_gateway_deployment" "helpdesk_deployment" {
   rest_api_id = aws_api_gateway_rest_api.helpdesk_api.id
@@ -204,8 +261,21 @@ resource "aws_api_gateway_deployment" "helpdesk_deployment" {
       aws_api_gateway_integration.get_tickets.id,
       aws_api_gateway_integration.update_ticket.id,
       aws_api_gateway_integration.add_comment.id,
+      # CORS too, otherwise adding an OPTIONS method never reaches the stage
+      aws_api_gateway_integration.tickets_options.id,
+      aws_api_gateway_integration_response.tickets_options.id,
+      [for k, v in aws_api_gateway_integration.cors_options : v.id],
+      [for k, v in aws_api_gateway_integration_response.cors_options : v.id],
     ]))
   }
+
+  # the integrations have to exist before a deployment snapshot is taken
+  depends_on = [
+    aws_api_gateway_integration.tickets_options,
+    aws_api_gateway_integration_response.tickets_options,
+    aws_api_gateway_integration.cors_options,
+    aws_api_gateway_integration_response.cors_options,
+  ]
 
   lifecycle {
     create_before_destroy = true

@@ -28,18 +28,14 @@ def lambda_handler(event, context):
         # Determine user role
         is_customer = 'customers' in user_groups
         
-        # Get ticket ID from path
+        # Get ticket ID from path (the API route is /tickets/{id})
         path_params = event.get('pathParameters', {}) or {}
-        if 'ticket_id' not in path_params:
+        ticket_id = path_params.get('id') or path_params.get('ticket_id')
+        if not ticket_id:
             return response(400, {'error': 'ticket_id is required'})
-        
-        ticket_id = path_params['ticket_id']
-        
-        # Parse update data
-        if 'body' in event:
-            body = json.loads(event['body'])
-        else:
-            body = event
+
+        # Parse update data (API Gateway sends body=None when there isn't one)
+        body = json.loads(event.get('body') or '{}')
         
         # Get existing ticket
         result = tickets_table.query(
@@ -75,26 +71,26 @@ def lambda_handler(event, context):
         
         for field in allowed_fields:
             if field in body:
-                # Handle reserved keywords (status is reserved)
-                if field == 'status':
-                    update_expr += ", #status = :status"
-                    expr_names['#status'] = 'status'
-                    expr_values[':status'] = body[field]
-                else:
-                    update_expr += f", {field} = :{field}"
-                    expr_values[f':{field}'] = body[field]
-        
-        # Update the ticket
-        response_data = tickets_table.update_item(
-            Key={
+                # use a name placeholder for every field, a few of these are
+                # DynamoDB reserved words (status, description...)
+                update_expr += f", #{field} = :{field}"
+                expr_names[f'#{field}'] = field
+                expr_values[f':{field}'] = body[field]
+
+        # Update the ticket. boto3 rejects ExpressionAttributeNames=None, so only
+        # pass it when there's something in it
+        update_args = {
+            'Key': {
                 'ticket_id': ticket_id,
                 'created_at': existing_ticket['created_at']
             },
-            UpdateExpression=update_expr,
-            ExpressionAttributeValues=expr_values,
-            ExpressionAttributeNames=expr_names if expr_names else None,
-            ReturnValues='ALL_NEW'
-        )
+            'UpdateExpression': update_expr,
+            'ExpressionAttributeValues': expr_values,
+            'ReturnValues': 'ALL_NEW'
+        }
+        if expr_names:
+            update_args['ExpressionAttributeNames'] = expr_names
+        response_data = tickets_table.update_item(**update_args)
         
         return response(200, {
             'message': 'Ticket updated successfully',
